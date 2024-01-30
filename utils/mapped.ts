@@ -11,8 +11,15 @@ export function get(object: any, path: string): any;
 export function get(object: any, path: string) {
 	const segs = path.split(".").filter(notNilStr);
 	if (segs.length > 1 && isRecord(object)) {
-		return object[firstMust(segs)]
+		const rGet = <T>(obj: T, path: string): any => {
+			const [firstSeg, ...rPath] = path.split(".")
+			const key = firstSeg as keyof T
+			if (isRecord(obj[key]) && rPath.length > 0) return rGet(obj[key], path.slice(firstSeg.length + 1))
+			return obj[key]
+		}
+		return rGet(object, path)
 	}
+	return object[firstMust(segs)]
 }
 
 export type Valueof<T> = T[keyof T];
