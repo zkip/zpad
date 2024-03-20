@@ -42,7 +42,7 @@ function setTitle(title: string) {
 	if (!initialized) return
 	environment.title = title
 }
-
+npm create svelte@latest my-app
 function toggleFullscreen(target: Element) {
 	const isFullscreen = document.fullscreenElement
 	if (isFullscreen) {

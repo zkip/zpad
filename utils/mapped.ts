@@ -32,138 +32,249 @@ export type PureLiteral<T extends ObjKey> = ShallowPrimitive<T> extends never ? 
 export type PureLiteralRecord<T extends Record<any, any>> = true extends IsAny<keyof T> ? never : PureLiteral<keyof T>;
 
 // reference from https://dev.to/scooperdev/supporting-circularly-referenced-mapped-types-in-typescript-4825
-// type SerKey<TObj> = keyof TObj & (string | number);
+type SerKey<TObj> = keyof TObj & (string | number);
 
 
-// type MaxRecursiveDepth = 18;
+type MaxRecursiveDepth = 18;
 
-// type NestedKeyPath<T = any, TDepth extends never[] = []> = {
-// 	[K in SerKey<T>]:
-// 	| (T[K] extends any ? `${K}` : never)
-// 	| (T[K] extends object ?
-// 		`${K}.${TDepth['length'] extends MaxRecursiveDepth ? any : NestedKeyPath<T[K], [...TDepth, never]>}`
-// 		: never)
-// }[SerKey<T>];
+type F = { a: { b: { f: number } } }[];
+type FF = F[number];
 
-// type NestedValue<T extends Record<string, any>, K extends string> =
-// 	K extends keyof T
-// 	? T[K]
-// 	: {
-// 		[NK in Split<K>[0]]: NestedValue<T[NK], Split<K>[1] extends NestedKeyPath<T[Split<K>[1]]> ? Split<K>[1] : never>
-// 	}[Split<K>[0]]
+type NestedKeyPath<T = any, TDepth extends never[] = []> = {
+	[K in SerKey<T>]:
+	| (T[K] extends any ? `${K}` : never)
+	| (T[K] extends object ?
+		`${K}.${TDepth['length'] extends MaxRecursiveDepth ? any : NestedKeyPath<T[K], [...TDepth, never]>}`
+		: never)
+}[SerKey<T>];
 
-// type Split<T extends string> = T extends `${infer S}.${infer R}` ? [S, R] : never;
+type NestedValue<T extends Record<string, any>, K extends string> =
+	K extends keyof T
+	? T[K]
+	: {
+		[NK in Split<K>[0]]: NestedValue<T[NK], Split<K>[1] extends NestedKeyPath<T[Split<K>[1]]> ? Split<K>[1] : never>
+	}[Split<K>[0]]
 
-// type R = Split<`1.23.4`>
-// type R1 = Split<`123.`>
-// type R2 = Split<`.4`>
+type Split<T extends string> = T extends `${infer S}.${infer R}` ? [S, R] : never;
 
-// type A = {
-// 	a: { b: { c: { name: 'seed', d: { e: { f: { h: { i: { core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal' } } } } } } } } } } } } } } } } } } }, x: 20 } }
-// 	// a2: { b: { c: { name: 'seed', d: { e: { f: { h: { i: { core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal' } } } } } } } } } } } } } } } } } } }, x: 20 } }
-// };
-// type B = { a: { b: { c: { name: 'seed' } } } }
-// // type B = NestedPathValue<A, 'a.b'>;
+type R = Split<`1.23.4`>
+type R1 = Split<`123.`>
+type R2 = Split<`.4`>
 
-// type C = Split<'a.b'>;
-// type D1 = NestedKeyPath<A>
+type A = {
+	a: { b: { c: { name: 'seed', d: { e: { f: { h: { i: { core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal' } } } } } } } } } } } } } } } } } } }, x: 20 } }
+	// a2: { b: { c: { name: 'seed', d: { e: { f: { h: { i: { core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal', core: { mutable: 'crystal' } } } } } } } } } } } } } } } } } } }, x: 20 } }
+};
+type B = { a: { b: { c: { name: 'seed' }, d: { e: { f: { t: number } } } } } }
+// type B = NestedPathValue<A, 'a.b'>;
 
-// type D2 = NestedKeyPath<B>
-// type E2 = NestedValue<B, 'a.c'>
+type C = Split<'a.b'>;
+type D1 = NestedKeyPath<A>
 
-// function vget<K extends NestedKeyPath<B>, V extends NestedValue<B, K>>(v: K): V {
-// 	return {} as V;
-// }
+type D2 = NestedKeyPath<B>
+type E2 = NestedValue<B, 'a.c'>
 
-// const d = vget('a.b.c.name')
+function vget<K extends NestedKeyPath<B>, V extends NestedValue<B, K>>(v: K): V {
+	return {} as V;
+}
 
-// export function _test() {
-// 	const target1 = new Object({ a: { b: { c: 'x' } } });
-// 	const target2 = { a: { b: { c: 'x' } }, feat: 12 };
-// 	const target3 = { a: { b: { c: 'x' } } } as Record<any, any>;
-// 	const v1 = get(target1, '');
-// 	const v2 = get(target2, 'a');
-// 	const v3 = get(target3, 'sd');
+const d = vget('a.b.c.name')
 
-// 	// /** isMappedType<T> testing start */
+export function _test() {
+	const target1 = new Object({ a: { b: { c: 'x' } } });
+	const target2 = { a: { b: { c: 'x' } }, feat: 12 };
+	const target3 = { a: { b: { c: 'x' } } } as Record<any, any>;
+	const v1 = get(target1, '');
+	const v2 = get(target2, 'a');
+	const v3 = get(target3, 'sd');
 
-// 	// const sym = Symbol();
-// 	// type Record1 = Record<any, any>;
-// 	// type Record2 = Record<ObjKey, any>;
-// 	// type Mapped1 = { 1: 'f', 'ff': 1, [sym]: 3 }
-// 	// type Mapped2 = {
-// 	// 	[12]: 'f', 'ff': 1, [sym]: 3
-// 	// } & { [k in string]: 3; }
+	// /** isMappedType<T> testing start */
 
-// 	// type E1 = keyof Record1;
-// 	// type E2 = keyof Record2;
-// 	// type E3 = keyof Mapped1;
-// 	// type E4 = keyof Mapped2;
+	// const sym = Symbol();
+	// type Record1 = Record<any, any>;
+	// type Record2 = Record<ObjKey, any>;
+	// type Mapped1 = { 1: 'f', 'ff': 1, [sym]: 3 }
+	// type Mapped2 = {
+	// 	[12]: 'f', 'ff': 1, [sym]: 3
+	// } & { [k in string]: 3; }
 
-// 	// type AnyR1 = true extends IsAny<E1> ? 1 : 0;	// 1, miss
-// 	// type AnyR2 = true extends IsAny<E2> ? 1 : 0;	// 0
-// 	// type AnyR3 = true extends IsAny<E3> ? 1 : 0;	// 0
-// 	// type AnyR4 = true extends IsAny<E4> ? 1 : 0;	// 0
+	// type E1 = keyof Record1;
+	// type E2 = keyof Record2;
+	// type E3 = keyof Mapped1;
+	// type E4 = keyof Mapped2;
 
-// 	// type X1 = ShallowPrimitive<keyof Record1>	// skip
-// 	// type X2 = ShallowPrimitive<keyof Record2>	// union primitive
-// 	// type X3 = ShallowPrimitive<keyof Mapped1>	// literal
-// 	// type X4 = ShallowPrimitive<keyof Mapped2>	// addtion primitive
+	// type AnyR1 = true extends IsAny<E1> ? 1 : 0;	// 1, miss
+	// type AnyR2 = true extends IsAny<E2> ? 1 : 0;	// 0
+	// type AnyR3 = true extends IsAny<E3> ? 1 : 0;	// 0
+	// type AnyR4 = true extends IsAny<E4> ? 1 : 0;	// 0
 
-// 	// type L1 = PureLiteral<E1>	// skip
-// 	// type L2 = PureLiteral<E2>	// union primitive
-// 	// type L3 = PureLiteral<E3>	// literal
-// 	// type L4 = PureLiteral<E4>	// addtion primitive
+	// type X1 = ShallowPrimitive<keyof Record1>	// skip
+	// type X2 = ShallowPrimitive<keyof Record2>	// union primitive
+	// type X3 = ShallowPrimitive<keyof Mapped1>	// literal
+	// type X4 = ShallowPrimitive<keyof Mapped2>	// addtion primitive
 
-// 	// type HLR1 = PureLiteralRecord<Record1>;		// never, pre 'any'
-// 	// type HLR2 = PureLiteralRecord<Record2>;		// never, miss
-// 	// type HLR3 = PureLiteralRecord<Mapped1>;		// T, hited
-// 	// type HLR4 = PureLiteralRecord<Mapped2>;		// never, miss
+	// type L1 = PureLiteral<E1>	// skip
+	// type L2 = PureLiteral<E2>	// union primitive
+	// type L3 = PureLiteral<E3>	// literal
+	// type L4 = PureLiteral<E4>	// addtion primitive
+
+	// type HLR1 = PureLiteralRecord<Record1>;		// never, pre 'any'
+	// type HLR2 = PureLiteralRecord<Record2>;		// never, miss
+	// type HLR3 = PureLiteralRecord<Mapped1>;		// T, hited
+	// type HLR4 = PureLiteralRecord<Mapped2>;		// never, miss
 
 
-// 	// function givenToDiff<T extends Record<any, any>>(record: T, key: PureLiteralRecord<T> extends never ? string : keyof T) {
+	// function givenToDiff<T extends Record<any, any>>(record: T, key: PureLiteralRecord<T> extends never ? string : keyof T) {
 
-// 	// }
+	// }
 
-// 	// const rSym = Symbol();
-// 	// const rs = { name: 'fe', 12: 4, [rSym]: '3' }
-// 	// const r1 = {} as Record1;
-// 	// const r2 = {} as Record2;
-// 	// const r3 = {} as Mapped1;
-// 	// const r4 = {} as Mapped2;
+	// const rSym = Symbol();
+	// const rs = { name: 'fe', 12: 4, [rSym]: '3' }
+	// const r1 = {} as Record1;
+	// const r2 = {} as Record2;
+	// const r3 = {} as Mapped1;
+	// const r4 = {} as Mapped2;
 
-// 	// givenToDiff(r1, 'skdjflksdj')
-// 	// givenToDiff(r2, 'sdf')
-// 	// givenToDiff(rs, 'name')
-// 	// givenToDiff(rs, rSym)
-// 	// givenToDiff(rs, Symbol())		// error: symbol is not assign to `unique symbol | "name" | 12`
-// 	// givenToDiff(rs, '12')			// error: '12' is not assign to `unique symbol | "name" | 12`
-// 	// givenToDiff(rs, 12)
-// 	// givenToDiff(rs, '12')			// error: '12' is not assign to `unique symbol | "name" | 12`
-// 	// givenToDiff(rs, 14)				// error: '14' is not assign to `unique symbol | "name" | 12`
-// 	// givenToDiff(rs, 'namef')		// error: "namef" not assign to `unique symbol | "name" | 12`
-// 	// givenToDiff(r3, 'ff')
-// 	// givenToDiff(r3, 'ff2')			// error: "ff2" not assign to "ff"
-// 	// givenToDiff(r4, 'eee')
+	// givenToDiff(r1, 'skdjflksdj')
+	// givenToDiff(r2, 'sdf')
+	// givenToDiff(rs, 'name')
+	// givenToDiff(rs, rSym)
+	// givenToDiff(rs, Symbol())		// error: symbol is not assign to `unique symbol | "name" | 12`
+	// givenToDiff(rs, '12')			// error: '12' is not assign to `unique symbol | "name" | 12`
+	// givenToDiff(rs, 12)
+	// givenToDiff(rs, '12')			// error: '12' is not assign to `unique symbol | "name" | 12`
+	// givenToDiff(rs, 14)				// error: '14' is not assign to `unique symbol | "name" | 12`
+	// givenToDiff(rs, 'namef')		// error: "namef" not assign to `unique symbol | "name" | 12`
+	// givenToDiff(r3, 'ff')
+	// givenToDiff(r3, 'ff2')			// error: "ff2" not assign to "ff"
+	// givenToDiff(r4, 'eee')
 
-// 	// // overload
-// 	// function givenToDiffOverload<T extends Record<any, any>, K = PureLiteralRecord<T> extends never ? string : keyof T>(record: T, key: K): void;
-// 	// function givenToDiffOverload<T extends Record<any, any>>(record: T, key: PureLiteralRecord<T> extends never ? string : keyof T) { }
+	// // overload
+	// function givenToDiffOverload<T extends Record<any, any>, K = PureLiteralRecord<T> extends never ? string : keyof T>(record: T, key: K): void;
+	// function givenToDiffOverload<T extends Record<any, any>>(record: T, key: PureLiteralRecord<T> extends never ? string : keyof T) { }
 
-// 	// givenToDiffOverload(r1, 'skdjflksdj')
-// 	// givenToDiffOverload(r2, 'sdf')
-// 	// givenToDiffOverload(rs, 'name')
-// 	// givenToDiffOverload(rs, rSym)
-// 	// givenToDiffOverload(rs, Symbol())		// overload redirect
-// 	// givenToDiffOverload(rs, '12')			// overload redirect
-// 	// givenToDiffOverload(rs, 12)
-// 	// givenToDiffOverload(rs, '12')			// overload redirect
-// 	// givenToDiffOverload(rs, 14)				// overload redirect
-// 	// givenToDiffOverload(rs, 'namef')		// overload redirect
-// 	// givenToDiffOverload(r3, 'ff')
-// 	// givenToDiffOverload(r3, 'ff2')			// overload redirect
-// 	// givenToDiffOverload(r4, 'eee')
+	// givenToDiffOverload(r1, 'skdjflksdj')
+	// givenToDiffOverload(r2, 'sdf')
+	// givenToDiffOverload(rs, 'name')
+	// givenToDiffOverload(rs, rSym)
+	// givenToDiffOverload(rs, Symbol())		// overload redirect
+	// givenToDiffOverload(rs, '12')			// overload redirect
+	// givenToDiffOverload(rs, 12)
+	// givenToDiffOverload(rs, '12')			// overload redirect
+	// givenToDiffOverload(rs, 14)				// overload redirect
+	// givenToDiffOverload(rs, 'namef')		// overload redirect
+	// givenToDiffOverload(r3, 'ff')
+	// givenToDiffOverload(r3, 'ff2')			// overload redirect
+	// givenToDiffOverload(r4, 'eee')
 
-// 	// givenToDiffOverload({ name: 'fe' }, 'namef')
-// 	// /** isMappedType<T> testing end */
-// }
+	// givenToDiffOverload({ name: 'fe' }, 'namef')
+	// /** isMappedType<T> testing end */
+}
+
+
+type F = {
+	name: string;
+	age: number;
+}
+
+
+function s(...args: F[]) { }
+
+type A1 = ['a', 'y', 'c'] | ['b', 'e', 'f'] | ['x', '1', 'fz']
+type A2 = ['a', 'b', 'c'] & ['b', 'e', 'f'] & ['x', '1', 'fz']
+type A3 = readonly ['a', 'b', 'c'] | readonly ['b', 'e', 'f'] | readonly ['x', '1', 'fz']
+['a', 'y', 'c'] | ['b', 'e', 'f'] | ['x', '1', 'fz'] => [['a', 'y', 'c'], ['b', 'e', 'f'], ['x', '1', 'fz']]
+
+extends a[0] == 'a'
+
+type St = string | number;
+
+type St2<T extends (infer U | infer U1 | infer U2)> = Exclude<T, B | C>
+
+type St3 = St2<A1>
+
+interface Fffff {
+	run(a: number): ['a', 'b', 'c'];
+	run(a: string): ['x', '1', 'fz'];
+	run(): ['b', 'e', 'f'];
+}
+
+function gf(args: ReturnType<Fffff['run']>) {
+
+}
+
+gf([''])
+
+function gff2(args: GGG[]) {
+
+}
+
+const ALL_SUITS = ['hearts', 'diamonds', 'spades', 'clubs'] as const;
+type SuitTuple = typeof ALL_SUITS; // readonly ['hearts', 'diamonds', 'spades', 'clubs']
+type Suit = SuitTuple[number];  // "hearts" | "diamonds" | "spades" | "clubs"
+
+type TupleUnion<U extends string, R extends any[] = []> = {
+	[S in U]: Exclude<U, S> extends never ? [...R, S] : TupleUnion<Exclude<U, S>, [...R, S]>;
+}[U];
+
+interface Person {
+	firstName: string;
+	lastName: string;
+	dob: Date;
+	hasCats: false;
+}
+
+type Data = { name: string, age: number }
+type Column<T, K extends keyof T = keyof T> = { dataIndex: K, render: (value: T[K]) => {} }
+
+type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
+	k: infer I
+) => void
+	? I
+	: never;
+
+// Converts union to overloaded function
+type UnionToOvlds<U> = UnionToIntersection<
+	U extends any ? (f: U) => void : never
+>;
+
+type PopUnion<U> = UnionToOvlds<U> extends (a: infer A) => void ? A : never;
+
+type IsUnion<T> = [T] extends [UnionToIntersection<T>] ? false : true;
+
+
+type UnionToArray<T, A extends unknown[] = []> = IsUnion<T> extends true
+	? UnionToArray<Exclude<T, PopUnion<T>>, [PopUnion<T>, ...A]>
+	: [T, ...A];
+
+type FSS = UnionToArray<keyof Data>
+
+
+type Ffff = ['a', 'b', 'c'] | ['d', 'e', 'f'] | ['h', 'i', 'j']
+function ffffff(a: UnionToArray<Ffff>[number]) { }
+ffffff(['a', 'e', 'c'])
+ffffff(['a', 'b', 'c'])
+
+
+const columns: Column<Data>[] = [
+	{
+		dataIndex: 'name',
+		render(value) {
+
+		}
+	},
+	{
+		dataIndex: 'age',
+		render(value) {
+
+		}
+	},
+	g('age', (value) => { }),
+	g('name', (value) => { }),
+]
+
+function g<T extends { dataIndex: keyof Data }, K extends keyof Data>(dataIndex: K, render: (value: Data[K]) => {}) {
+	// return { name: string, age: number }
+
+	return {} as T
+}
