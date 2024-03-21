@@ -172,44 +172,8 @@ export function _test() {
 }
 
 
-type F = {
-	name: string;
-	age: number;
-}
-
-
-function s(...args: F[]) { }
-
-type A1 = ['a', 'y', 'c'] | ['b', 'e', 'f'] | ['x', '1', 'fz']
-type A2 = ['a', 'b', 'c'] & ['b', 'e', 'f'] & ['x', '1', 'fz']
-type A3 = readonly ['a', 'b', 'c'] | readonly ['b', 'e', 'f'] | readonly ['x', '1', 'fz']
-['a', 'y', 'c'] | ['b', 'e', 'f'] | ['x', '1', 'fz'] => [['a', 'y', 'c'], ['b', 'e', 'f'], ['x', '1', 'fz']]
-
-extends a[0] == 'a'
-
-type St = string | number;
-
-type St2<T extends (infer U | infer U1 | infer U2)> = Exclude<T, B | C>
-
-type St3 = St2<A1>
-
-interface Fffff {
-	run(a: number): ['a', 'b', 'c'];
-	run(a: string): ['x', '1', 'fz'];
-	run(): ['b', 'e', 'f'];
-}
-
-function gf(args: ReturnType<Fffff['run']>) {
-
-}
-
-gf([''])
-
-function gff2(args: GGG[]) {
-
-}
-
 const ALL_SUITS = ['hearts', 'diamonds', 'spades', 'clubs'] as const;
+
 type SuitTuple = typeof ALL_SUITS; // readonly ['hearts', 'diamonds', 'spades', 'clubs']
 type Suit = SuitTuple[number];  // "hearts" | "diamonds" | "spades" | "clubs"
 
@@ -224,53 +188,73 @@ interface Person {
 	hasCats: false;
 }
 
-type Data = { name: string, age: number }
-type Column<T, K extends keyof T = keyof T> = { dataIndex: K, render: (value: T[K]) => {} }
+type Data = { name: string, age: number, weight: number }
 
 type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
 	k: infer I
-) => void
-	? I
-	: never;
-
+) => void ? I : never;
 // Converts union to overloaded function
-type UnionToOvlds<U> = UnionToIntersection<
-	U extends any ? (f: U) => void : never
->;
-
+type UnionToOvlds<U> = UnionToIntersection<U extends any ? (f: U) => void : never>;
 type PopUnion<U> = UnionToOvlds<U> extends (a: infer A) => void ? A : never;
-
 type IsUnion<T> = [T] extends [UnionToIntersection<T>] ? false : true;
-
-
 type UnionToArray<T, A extends unknown[] = []> = IsUnion<T> extends true
 	? UnionToArray<Exclude<T, PopUnion<T>>, [PopUnion<T>, ...A]>
 	: [T, ...A];
+type OrderedColumnsType<T, Ary extends any[] = UnionToArray<keyof T>, Results extends any[] = [], TDepth extends never[] = []> =
+	TDepth['length'] extends Ary['length'] ?
+	Results :
+	OrderedColumnsType<
+		T, Ary,
+		[...Results, {
+			dataIndex: Ary[TDepth['length']], render: (value: T[Ary[TDepth['length']]]) => void
+		}],
+		[...TDepth, never]
+	>;
 
-type FSS = UnionToArray<keyof Data>
+type FindIndex<Ary extends T[], Item extends T, T = any, Results extends any[] = [], TDepth extends never[] = []> =
+	TDepth['length'] extends Ary['length'] ? never :
+	Item extends Ary[TDepth['length']] ? TDepth['length'] :
+	FindIndex<Ary, Item, T, [...Results, Item], [...TDepth, never]>
+
+type UnOrderedColumnsType<T, Ary extends any[] = UnionToArray<keyof T>, TMap = {}, Results extends any[] = [], TDepth extends never[] = []> =
+	TDepth['length'] extends Ary['length'] ? Results :
+	UnOrderedColumnsType<
+		T, Ary, { [key in Ary[TDepth['length']]]: TDepth['length'] },
+		[...Results,
+			{ dataIndex: Ary[number] } extends { dataIndex: infer U } ?
+			{ dataIndex: U } extends { dataIndex: Ary[number] } ?
+			U : {}
+			: {}
+			// {
+			// 	dataIndex: Ary[TDepth['length']], render: (value: T[Ary[TDepth['length']]]) => void,
+			// 	d?: Ary,
+			// 	i?: FindIndex<Ary, Ary[TDepth['length']]>,
+			// 	f?: Ary[number] extends infer U ? U : 'F',
+			// }
+		],
+		[...TDepth, never]
+	>;
 
 
-type Ffff = ['a', 'b', 'c'] | ['d', 'e', 'f'] | ['h', 'i', 'j']
-function ffffff(a: UnionToArray<Ffff>[number]) { }
-ffffff(['a', 'e', 'c'])
-ffffff(['a', 'b', 'c'])
+const columns: UnOrderedColumnsType<Data> = [
+	// {
+	// 	dataIndex: 'age',
+	// 	render(value) {
 
-
-const columns: Column<Data>[] = [
-	{
-		dataIndex: 'name',
-		render(value) {
-
-		}
-	},
+	// 	},
+	// },
 	{
 		dataIndex: 'age',
 		render(value) {
 
-		}
+		},
 	},
-	g('age', (value) => { }),
-	g('name', (value) => { }),
+	{
+		dataIndex: 'name',
+		render(value) {
+
+		},
+	},
 ]
 
 function g<T extends { dataIndex: keyof Data }, K extends keyof Data>(dataIndex: K, render: (value: Data[K]) => {}) {

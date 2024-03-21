@@ -1,6 +1,5 @@
 <script lang="ts">
-	let current = 0;
-	const tools = [{ class: '' }];
+	import Toolbar from '../../components/Toolbar.svelte';
 
 	async function f() {
 		const parser = new DOMParser();
@@ -10,10 +9,6 @@
 </script>
 
 <div class="flex flex-col bg-red-50">
-	<div class="flex">
-		<div class="flex">
-			<i class="icon-chevron-right text-4xl" />
-		</div>
-	</div>
+	<Toolbar />
 	<div class="flex-1"></div>
 </div>
