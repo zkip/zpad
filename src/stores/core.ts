@@ -1,30 +1,38 @@
-import { isNil } from "$lib/asserts";
-import { onlyBrowser } from "$lib/browser";
-import { tryToNum } from "$lib/transformer";
-import { writable } from "svelte/store";
+import { isNil } from '$lib/asserts';
+import { onlyBrowser } from '$lib/browser';
+import { tryToNum } from '$lib/transformer';
+import { writable } from 'svelte/store';
+import type { SetGetter } from '../types/storage';
+import { storageItemGet, storageItemRemove, storageItemSet } from '$lib/storage';
 
-export const StrSeralizer = {
-	get: (value: string) => value,
-	set: (data: string) => data.toString(),
-}
-export const NumSeralizer = {
-	get: (value: string | null) => tryToNum(value),
-	set: (data: number | undefined) => data?.toString(),
-}
+export const StrSerializer: SetGetter<string | undefined> = {
+	get: (value: string | undefined) => value,
+	set: (data: string | undefined) => data?.toString()
+};
+export const NumSerializer: SetGetter<number | undefined> = {
+	get: (value: string | undefined) => tryToNum(value),
+	set: (data: number | undefined) => data?.toString()
+};
 
-export const toolsIcons = storagable<string[]>('tools', {
+export const toolsIcons = storable<string[]>('tools', {
 	fallback: [],
-	get: (value) => value?.split(","),
-	set: (data) => data.join(",")
+	get: (value) => value?.split(','),
+	set: (data) => (data.length > 0 ? data.join(',') : undefined)
 });
-export const focusToolIndex = storagable<number>('tool-focus-index', NumSeralizer);
+export const focusToolIndex = storable<number | undefined>('tool-focus-index', NumSerializer);
 
-function storagable<T>(key: string, sg: { fallback?: T, get: (value: string | null) => T | undefined, set: (data: T) => string | undefined }) {
+function storable<T>(key: string, sg: SetGetter<T>) {
 	const { get, set, fallback } = sg;
-	const result = writable(onlyBrowser(() => get(localStorage.getItem(key))) ?? fallback)
-	result.subscribe((value) => onlyBrowser(() => {
-		const seralized = set(value);
-		isNil(seralized) ? localStorage.removeItem(key) : localStorage.setItem(key, seralized)
-	}))
+	const result = writable(onlyBrowser(() => get(storageItemGet(key))) ?? fallback);
+	result.subscribe((value) =>
+		onlyBrowser(() => {
+			const serialized = set(value);
+			isNil(serialized) ? storageItemRemove(key) : storageItemSet(key, serialized);
+		})
+	);
 	return result;
+}
+
+export function inactivate() {
+	focusToolIndex.update(() => undefined);
 }

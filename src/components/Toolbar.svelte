@@ -1,33 +1,56 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { focusToolIndex, toolsIcons } from '../stores/core';
+	import { focusToolIndex, inactivate, toolsIcons } from '../stores/core';
 	import type { HTMLAttributes } from 'svelte/elements';
 	import { isHTMLElement } from '$lib/asserts';
+	import { onlyBrowser } from '$lib/browser';
 
 	function remove() {
 		if (!currentContext) return;
+		console.log(currentContext, '>>');
+
 		const { index } = currentContext;
-		toolsIcons.update((icons) => (icons.splice(index, 1), icons));
+		$toolsIcons.splice(index, 1);
+		$toolsIcons = $toolsIcons.slice();
+
+		if (index === $focusToolIndex) inactivate();
+		
+		clearContext();
 	}
 
-	let contextDOM: HTMLDivElement;
+	let contextNode: HTMLDivElement;
 
 	if (typeof window !== 'undefined') {
 		document.oncontextmenu = () => false;
 	}
 
 	if (typeof window !== 'undefined') {
-		addEventListener('click', () => {
-			contextDOM.style.display = 'none';
-			currentContext = undefined;
-		});
+		addEventListener(
+			'click',
+			(event) => {
+				const target = event.target as HTMLElement;
+				if (target.parentElement === contextNode || target === contextNode) {
+					return;
+				}
+				clearContext();
+			},
+			{ capture: true }
+		);
 	}
 
 	onMount(() => {});
 
-	function contextmenu(context: { icon: string; index: number }) {
-		contextDOM.style.display = 'block';
-		currentContext = context;
+	function contextmenu(event: MouseEvent & { currentTarget: EventTarget & HTMLDivElement }) {
+		const { currentTarget } = event;
+		const index = Number(currentTarget.getAttribute('data-index')) as number;
+		const icon = $toolsIcons[index];
+		const x = event.clientX,
+			y = event.clientY;
+
+		contextNode.style.display = 'block';
+		contextNode.style.left = `${x}px`;
+		contextNode.style.top = `${y}px`;
+		currentContext = { icon, index, position: { x, y } };
 	}
 
 	function click({ target }: MouseEvent) {
@@ -37,30 +60,35 @@
 		}
 	}
 
-	let currentContext: { icon: string; index: number } | undefined;
-
-	function inactivate() {
-		$focusToolIndex = undefined;
+	function clearContext() {
+		contextNode.style.display = 'none';
+		currentContext = undefined;
 	}
+
+	let currentContext:
+		| { icon: string; index: number; position?: { x: number; y: number } }
+		| undefined;
+
+	onlyBrowser(() => addEventListener('keydown', ({ key }) => key === 'Escape' && inactivate()));
 
 	interface $$Props extends HTMLAttributes<HTMLDivElement> {}
 </script>
 
-<div {...$$restProps} class="flex bg-slate-500 {$$restProps.class}" on:click={inactivate}>
+<div {...$$restProps} class="flex bg-slate-500 {$$restProps.class}">
 	{#each $toolsIcons as icon, index}
 		<div
 			class="flex item justify-center items-center"
 			class:activate={index === $focusToolIndex}
 			data-index={index}
 			on:click|stopPropagation={click}
-			on:contextmenu={() => contextmenu({ icon, index })}
+			on:contextmenu={contextmenu}
 		>
 			<i class="{icon} text-2xl pointer-events-none" />
 		</div>
 	{/each}
 </div>
 
-<div id="context-menu" bind:this={contextDOM} class="select-none">
+<div id="context-menu" bind:this={contextNode} class="select-none">
 	<div on:click={remove}>Remove</div>
 </div>
 
