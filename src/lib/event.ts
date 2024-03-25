@@ -1,41 +1,6 @@
-// type Listener = EventListenerOrEventListenerObject;
+import { isStr } from './asserts';
 
-// interface EventReceipt {
-// 	clean(target: Window): void;
-// 	clean(target: HTMLElement): void;
-// 	attach(target: HTMLElement, options?: boolean | AddEventListenerOptions): EventReceipt;
-// 	attach(target?: Window, options?: boolean | AddEventListenerOptions): EventReceipt;
-// }
-
-// export function listen<K extends keyof HTMLElementEventMap>(
-// 	type: K,
-// 	istener: Listener
-// ): EventReceipt;
-// export function listen<K extends keyof WindowEventMap>(type: K, listener: Listener): EventReceipt;
-// export function listen<K extends keyof HTMLElementEventMap | keyof WindowEventMap>(
-// 	type: K,
-// 	listener: Listener
-// ) {
-// 	let targets = new Array<Window | HTMLElement>();
-// 	function clean(target: Window | HTMLElement) {
-// 		const targetSet = new Set(targets);
-// 		if (!targetSet.has(target)) return;
-
-// 		targetSet.delete(target);
-// 		targets = Array.from(targetSet.values());
-// 	}
-// 	function attach(
-// 		target: HTMLElement | Window = window,
-// 		options?: boolean | AddEventListenerOptions
-// 	) {
-// 		targets.push(target);
-// 		target.addEventListener(type, listener, options);
-// 		return { attach, clean };
-// 	}
-// 	return { attach, clean };
-// }
-
-type DOMElementEventMapMap = [
+type EventMapMap = [
 	[AbortSignal, AbortSignalEventMap],
 	[AbstractWorker, AbstractWorkerEventMap],
 	[Animation, AnimationEventMap],
@@ -258,37 +223,60 @@ type DOMElementEventMapMap = [
 	[XMLDocument, DocumentEventMap],
 	[XMLHttpRequest, XMLHttpRequestEventMap],
 	[XMLHttpRequestEventTarget, XMLHttpRequestEventTargetEventMap],
-	[XMLHttpRequestUpload, XMLHttpRequestEventTargetEventMap],
-	[Window, WindowEventMap]
+	[XMLHttpRequestUpload, XMLHttpRequestEventTargetEventMap]
 ];
 
-// https://github.com/microsoft/TypeScript/issues/40689
-type MapDefinitionToEventMap<T, D extends { [K: number]: unknown[] } = DOMElementEventMapMap> = {
-	[K in keyof D]: D[K] extends unknown[]
-		? D[K][0] extends T
-			? T extends D[K][0]
-				? D[K][1]
-				: never
-			: never
-		: never;
-}[number];
+export type IndexEventType<
+	T,
+	Ary extends EventMapMap = EventMapMap,
+	Results = never,
+	TDepth extends never[] = []
+> = TDepth['length'] extends Ary['length']
+	? Results
+	: IndexEventType<
+			T,
+			Ary,
+			Results | (T extends Ary[TDepth['length']][0] ? keyof Ary[TDepth['length']][1] : never),
+			[...TDepth, never]
+		>;
 
-type Targets = DOMElementEventMapMap[number][0];
-type GetEventMapByTarget<Target extends Targets> = MapDefinitionToEventMap<Target>;
+export type IndexEvent<
+	T,
+	Ary extends EventMapMap = EventMapMap,
+	TDepth extends never[] = []
+> = TDepth['length'] extends Ary['length']
+	? never
+	: T extends Ary[TDepth['length']][0]
+		? Ary[TDepth['length']][0] extends T
+			? Ary[TDepth['length']][1]
+			: IndexEvent<T, Ary, [...TDepth, never]>
+		: IndexEvent<T, Ary, [...TDepth, never]>;
 
-// export function listen<T extends Targets, K extends keyof GetEventMapByTarget<T>>(target: T): void;
-export function event<T extends Targets, EventMap = GetEventMapByTarget<T>>(
-	target: T = window as unknown as T,
-	option: boolean | AddEventListenerOptions
+type MustEvent<T, K extends IndexEventType<T>> =
+	IndexEvent<T> extends { [key in K]: unknown } ? IndexEvent<T>[K] : never;
+
+export function listen<T extends EventTarget, K extends IndexEventType<T> = IndexEventType<T>>(
+	[target, type, options]: [T, K, AddEventListenerOptions?],
+	listener: (event: MustEvent<T, K>) => unknown
+): () => void;
+export function listen<T = Window, K extends IndexEventType<T> = IndexEventType<T>>(
+	[type, options]: [K, AddEventListenerOptions?],
+	listener: (event: MustEvent<T, K>) => unknown
+): () => void;
+export function listen<
+	T extends EventTarget = Window,
+	K extends IndexEventType<T> = IndexEventType<T>
+>(
+	args: [T, K, AddEventListenerOptions?] | [K, AddEventListenerOptions?],
+	listener: (event: MustEvent<T, K>) => unknown
 ) {
-	return function listen<K extends keyof EventMap>(
-		type: K,
-		listener: (event: EventMap) => unknown
-	) {
-		target.addEventListener(type as string, listener as EventListener, option);
-
-		return function clean() {
-			target.removeEventListener(type as string, listener as EventListener, option);
-		};
+	const [target, type, options] = (isStr(args[0]) ? [window, ...args] : args) as [
+		T,
+		K,
+		AddEventListenerOptions?
+	];
+	target.addEventListener(type, listener as EventListener, options);
+	return function clean() {
+		target.removeEventListener(type, listener as EventListener, options);
 	};
 }

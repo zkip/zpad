@@ -56,3 +56,7 @@ export function isNumStr(v: string) {
 export function isThenable<T, V extends ThenFn<unknown>>(v: T | V): v is V {
 	return notNil(v) && typeof (v as ThenFn<unknown>).then === 'function';
 }
+
+export function isStr<T>(v: T | string): v is string {
+	return typeof v === 'string';
+}

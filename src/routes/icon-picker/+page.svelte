@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import Toolbar from '../../components/Toolbar.svelte';
-	import { focusToolIndex, toolsIcons } from '../../stores/core';
+	import { focusToolIndex, toolsIcons } from '../../core/core';
+	import Contextmenu from '../../components/Contextmenu.svelte';
+	import { showContextmenu } from '../../core/context';
 
 	let surface: HTMLDivElement;
 
@@ -72,6 +74,8 @@
 		<div class="target"></div>
 	</div>
 </div>
+
+<Contextmenu />
 
 <style lang="postcss">
 	:global(.surface > :hover) {
