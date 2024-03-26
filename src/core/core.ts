@@ -14,14 +14,7 @@ export const NumSerializer: SetGetter<number | undefined> = {
 	set: (data: number | undefined) => data?.toString()
 };
 
-export const toolsIcons = storable<string[]>('tools', {
-	fallback: [],
-	get: (value) => value?.split(','),
-	set: (data) => (data.length > 0 ? data.join(',') : undefined)
-});
-export const focusToolIndex = storable<number | undefined>('tool-focus-index', NumSerializer);
-
-function storable<T>(key: string, sg: SetGetter<T>) {
+export function storable<T>(key: string, sg: SetGetter<T>) {
 	const { get, set, fallback } = sg;
 	const result = writable(onlyBrowser(() => get(storageItemGet(key))) ?? fallback);
 	result.subscribe((value) =>
@@ -31,8 +24,4 @@ function storable<T>(key: string, sg: SetGetter<T>) {
 		})
 	);
 	return result;
-}
-
-export function inactivate() {
-	focusToolIndex.update(() => undefined);
 }

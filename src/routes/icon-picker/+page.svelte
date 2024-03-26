@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import Toolbar from '../../components/Toolbar.svelte';
-	import { focusToolIndex, toolsIcons } from '../../core/core';
 	import Contextmenu from '../../components/Contextmenu.svelte';
-	import { showContextmenu } from '../../core/context';
+	import { showContextmenu } from '../../core/contextmenu';
+	import { upsertTool } from '../../core/tools';
 
 	let surface: HTMLDivElement;
 
@@ -50,14 +50,6 @@
 				showTips('已复制', { x: e.clientX, y: e.clientY });
 			}
 		});
-	}
-
-	function upsertTool(icon: string) {
-		if ($focusToolIndex === undefined) {
-			$toolsIcons = [...$toolsIcons, icon];
-		} else {
-			$toolsIcons[$focusToolIndex] = icon;
-		}
 	}
 
 	onMount(() => {

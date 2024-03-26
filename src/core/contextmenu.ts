@@ -1,6 +1,7 @@
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import { removeTools } from './tools';
 import type { ArgsType } from '../types/function';
+import { last } from '$lib/list';
 
 export const context = writable<string>();
 
@@ -32,12 +33,28 @@ export const contextVisible = writable(false);
 export const contextmenuPosition = writable({ x: 0, y: 0 });
 export const contextData = writable<ContextAction[]>([]);
 export const defaultContextData = writable<ContextAction[]>([]);
+export const focusLayers = writable<EventLayer[]>([]);
+export const layerEvent = writable<{ blur?: Event; focus?: Event }>({});
+
+export type EventLayer = 'contextmenu';
 
 export function showContextmenu(data: ContextAction[], event: MouseEvent) {
 	toggleContextmenu(true);
 
-	contextData.update(() => data);
 	contextmenuPosition.update(() => ({ x: event.clientX, y: event.clientY }));
+	layerEvent.update(() => ({ focus: event }));
+	contextData.update(() => data);
+	
+	if (last(get(focusLayers)) === 'contextmenu') return;
+	focusLayers.update((layers) => (layers.push('contextmenu'), layers));
+}
+
+export function hiddenContextmenu(event?: Event) {
+	if (last(get(focusLayers)) !== 'contextmenu') return;
+
+	toggleContextmenu(false);
+	layerEvent.update(() => ({ blur: event }));
+	focusLayers.update((layers) => (layers.pop(), layers));
 }
 
 export function toggleContextmenu(visible?: boolean) {
@@ -46,4 +63,17 @@ export function toggleContextmenu(visible?: boolean) {
 
 export function setDefaultContextAction(data: ContextAction[]) {
 	defaultContextData.update(() => data);
+}
+
+export function runWithoutFocusLayer<A extends unknown[], R>(
+	event: Event,
+	fn: (...args: A) => R,
+	...args: A
+) {
+	if (hasFocusLayer(event)) return;
+	return fn(...args);
+}
+
+export function hasFocusLayer(event: Event) {
+	return get(focusLayers).length > 0 || Object.values(get(layerEvent)).some((e) => e === event);
 }

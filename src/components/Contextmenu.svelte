@@ -1,5 +1,16 @@
-<script>
-	import { ContextDataMap, contextData, contextVisible, contextmenuPosition, defaultContextData } from '../core/context';
+<script lang="ts">
+	import { onlyBrowser } from '$lib/browser';
+	import { listen } from '$lib/event';
+	import {
+		ContextDataMap,
+		contextData,
+		contextVisible,
+		contextmenuPosition,
+		hiddenContextmenu,
+		defaultContextData,
+		type ContextDataType
+	} from '../core/contextmenu';
+	import type { ArgsType } from '../types/function';
 
 	$: finalData = $contextData.map(({ action, args, disabled, show }, index) => ({
 		action,
@@ -8,15 +19,33 @@
 		disabled: disabled ?? $defaultContextData[index]?.disabled ?? false
 	}));
 
+	onlyBrowser(() => (document.oncontextmenu = () => false));
+	onlyBrowser(() => listen(['click'], (event) => hiddenContextmenu(event)));
+	onlyBrowser(() =>
+		listen(['keydown'], (event) => event.key === 'Escape' && hiddenContextmenu(event))
+	);
+
 	$: left = $contextmenuPosition.x;
 	$: top = $contextmenuPosition.y;
+
+	function callAnHidden<K extends keyof ContextDataType>(
+		action: K,
+		...args: ArgsType<ContextDataType[keyof ContextDataType]>
+	) {
+		ContextDataMap[action](...args);
+		hiddenContextmenu();
+	}
 </script>
 
-<div class="flex flex-col gap-2 context-menu activate" class:activate={$contextVisible} style="left: {left}px; top: {top}px;">
+<div
+	class="flex flex-col gap-2 context-menu activate"
+	class:activate={$contextVisible}
+	style="left: {left}px; top: {top}px;"
+>
 	{#each finalData as { args, action, show, disabled }}
 		{#if show && action === 'removeTools'}
-			<div id="context-menu" class="select-none" class:show class:disabled>
-				<div on:click={() => ContextDataMap.removeTools(...args)}>Remove tool</div>
+			<div id="context-menu" class="select-none" class:disabled>
+				<div on:click={() => callAnHidden('removeTools', ...args)}>Remove tool</div>
 			</div>
 		{/if}
 	{/each}
@@ -31,7 +60,9 @@
 	.context-menu {
 		box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
 		z-index: 10;
-		background: rebeccapurple;
+		background: white;
+		@apply rounded-[5px];
+		@apply overflow-hidden;
 	}
 
 	.context-menu:not(.activate) {
@@ -44,7 +75,11 @@
 		position: absolute;
 	}
 
-	.context-menu>:not(.show){
-		display: none;
+	.context-menu > * {
+		@apply px-3 py-0.5;
+	}
+
+	.context-menu > :hover {
+		@apply bg-slate-400;
 	}
 </style>
