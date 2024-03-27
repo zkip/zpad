@@ -1,11 +1,12 @@
 <script lang="ts">
 	import Toolbar from '$components/Toolbar.svelte';
 	import { hasFocusLayer, setDefaultContextAction } from '$core/contextmenu';
-	import { createRectangle } from '$core/world';
+	import { createRectangle, world } from '$core/world';
 	import { onlyBrowser } from '$lib/browser';
 	import { listen } from '$lib/event';
 	import { uuid } from '$lib/generator';
 	import { Vector2 } from '$lib/vector';
+	import type { Rectangle } from '$types/Rectangle';
 	import { onDestroy, onMount } from 'svelte';
 
 	setDefaultContextAction({ removeTools: { show: false } });
@@ -22,7 +23,29 @@
 
 	let clean: () => void;
 
+	function bind(node: HTMLElement, { position, size }: Rectangle) {
+		node.style.left = `${position.x}px`;
+		node.style.top = `${position.y}px`;
+		node.style.width = `${size.width}px`;
+		node.style.height = `${size.height}px`;
+	}
+
+	function sdff() {
+		const entities = $world;
+		const fragment = document.createDocumentFragment();
+		for (const entity of entities) {
+			const node = document.createElement('div');
+			const rect = entity as Rectangle;
+			bind(node, rect);
+			fragment.appendChild(node);
+		}
+
+		editorNode.appendChild(fragment);
+	}
+
 	onMount(() => {
+		sdff();
+
 		const cleanMousedown = listen([editorNode, 'mousedown'], (event) => {
 			if (hasFocusLayer(event)) return;
 
@@ -45,7 +68,17 @@
 			const { clientX, clientY } = event;
 			end = new Vector2(clientX, clientY);
 
-			// createRectangle({id: uuid(), position: })
+			const rect = {
+				id: uuid(),
+				position: { x: position.x, y: position.y },
+				size: { width: size.x, height: size.y }
+			};
+
+			const node = document.createElement('div');
+			bind(node, rect);
+			editorNode.appendChild(node);
+
+			createRectangle(rect);
 		});
 
 		clean = () => {
@@ -87,5 +120,11 @@
 
 	.editor {
 		@apply absolute left-0 right-0 top-0 bottom-0 overflow-hidden;
+		@apply select-none;
+	}
+
+	.editor > :global(*) {
+		border: 1px solid rebeccapurple;
+		@apply absolute;
 	}
 </style>

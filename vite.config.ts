@@ -5,6 +5,6 @@ export default defineConfig({
 	plugins: [sveltekit()],
 	server: { fs: { allow: ["."] } },
 	test: {
-		include: ['src/**/*.{test,spec}.{js,ts}']
+		include: ['./test/**/*.{test,spec}.{js,ts}']
 	},
 });
