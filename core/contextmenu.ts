@@ -2,6 +2,7 @@ import { get, writable } from 'svelte/store';
 import { removeTools } from './tools';
 import type { ArgsType } from '../types/function';
 import { last } from '$lib/list';
+import { notNil } from '$lib/asserts';
 
 export const context = writable<string>();
 
@@ -32,19 +33,27 @@ export type ContextAction<K extends keyof ContextDataType = keyof ContextDataTyp
 export const contextVisible = writable(false);
 export const contextmenuPosition = writable({ x: 0, y: 0 });
 export const contextData = writable<ContextAction[]>([]);
-export const defaultContextData = writable<ContextAction[]>([]);
+export const defaultContextData = writable<DefaultContextActionOption>({
+	removeTools: { show: true, disabled: false }
+});
 export const focusLayers = writable<EventLayer[]>([]);
 export const layerEvent = writable<{ blur?: Event; focus?: Event }>({});
 
 export type EventLayer = 'contextmenu';
+export type DefaultContextActionOption = { [K in keyof ContextDataType]?: Partial<ContextAction<K>> };
 
 export function showContextmenu(data: ContextAction[], event: MouseEvent) {
+	const showCount = data.filter(({ show }) => show).length;
+	const defaultShowCount = Object.values(get(defaultContextData)).filter(({ show }) => show).length;
+
+	if (showCount + defaultShowCount <= 0) return;
+
 	toggleContextmenu(true);
 
 	contextmenuPosition.update(() => ({ x: event.clientX, y: event.clientY }));
 	layerEvent.update(() => ({ focus: event }));
 	contextData.update(() => data);
-	
+
 	if (last(get(focusLayers)) === 'contextmenu') return;
 	focusLayers.update((layers) => (layers.push('contextmenu'), layers));
 }
@@ -61,7 +70,7 @@ export function toggleContextmenu(visible?: boolean) {
 	contextVisible.update((nowVisible) => visible ?? !nowVisible);
 }
 
-export function setDefaultContextAction(data: ContextAction[]) {
+export function setDefaultContextAction(data: DefaultContextActionOption) {
 	defaultContextData.update(() => data);
 }
 

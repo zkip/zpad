@@ -29,7 +29,7 @@
 	interface $$Props extends HTMLAttributes<HTMLDivElement> {}
 </script>
 
-<div {...$$restProps} class="tools flex bg-slate-500 {$$restProps.class}">
+<div {...$$restProps} class="tools flex bg-slate-500 z-10 {$$restProps.class}">
 	{#each $toolIcons as icon, index}
 		<div
 			class="flex item justify-center items-center"
@@ -45,13 +45,10 @@
 
 <style lang="postcss">
 	.item {
-		box-sizing: border-box;
-		width: 24px;
-		height: 24px;
+		@apply w-6 h-6 box-border;
 	}
 	.item.activate {
-		@apply bg-slate-700;
-		@apply text-white;
+		@apply bg-slate-700 text-white;
 	}
 
 	.tools {

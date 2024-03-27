@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import Toolbar from '../../components/Toolbar.svelte';
-	import Contextmenu from '../../components/Contextmenu.svelte';
-	import { showContextmenu } from '../../core/contextmenu';
-	import { upsertTool } from '../../core/tools';
-
+	import Toolbar from '$components/Toolbar.svelte';
+	import { hasFocusLayer, setDefaultContextAction } from '$core/contextmenu';
+	import { listen } from '$lib/event';
+	import { onlyBrowser } from '$lib/browser';
+	import { repeat } from '$lib/list';
+	import { upsertTool } from '$core/tools';
 	let surface: HTMLDivElement;
+	setDefaultContextAction({ removeTools: { show: true } });
 
 	function showTips(text: string, position: { x: number; y: number }) {
 		const template = document.querySelector('.lite-tips') as HTMLDivElement;
@@ -22,39 +23,39 @@
 		cameraLayerNode.appendChild(liveNode);
 	}
 
-	async function f() {
+	async function parseIcomoonDoc(setCounts: number = 0) {
 		const parser = new DOMParser();
 		const f = await fetch('icomoon/demo.html');
 		const text = await f.text();
 		const doc = parser.parseFromString(text, 'text/html');
 		const ds = doc.querySelector('body')!;
-		const glyphs_fs1 = doc.querySelectorAll('.glyph.fs1>:first-child>:first-child');
-		const glyphs_fs2 = doc.querySelectorAll('.glyph.fs2>:first-child>:first-child');
-		const fragment = new DocumentFragment();
-		fragment.append(...glyphs_fs1);
-		fragment.append(...glyphs_fs2);
-
+		const glyphs_fs = repeat(setCounts, (i) => `.glyph.fs${i + 1}>:first-child>:first-child`).map(
+			(selector) => doc.querySelectorAll(selector)
+		);
 		const target = document.querySelector('.target')!;
-		target.replaceWith(...glyphs_fs1, ...glyphs_fs2);
+		const fragment = new DocumentFragment();
 
-		surface.addEventListener('mousedown', (e) => {
-			if (e.target !== surface && e.buttons === 1) {
-				const d = e.target as HTMLSpanElement;
+		for (const glyphs of glyphs_fs) fragment.append(...glyphs);
+
+		target.replaceWith(...fragment.children);
+
+		listen([surface, 'mousedown'], (event) => {
+			if (hasFocusLayer(event)) return;
+			if (event.target !== surface && event.buttons === 1) {
+				const d = event.target as HTMLSpanElement;
 				const icon = d.getAttribute('class')!;
 				upsertTool(icon);
 			}
-			if (e.target !== surface && e.buttons === 2) {
-				const d = e.target as HTMLSpanElement;
+			if (event.target !== surface && event.buttons === 2) {
+				const d = event.target as HTMLSpanElement;
 				const icon = d.getAttribute('class')!;
 				navigator.clipboard.writeText(icon);
-				showTips('已复制', { x: e.clientX, y: e.clientY });
+				showTips('已复制', { x: event.clientX, y: event.clientY });
 			}
 		});
 	}
 
-	onMount(() => {
-		f();
-	});
+	onlyBrowser(parseIcomoonDoc, 2);
 </script>
 
 <div class="camera-layer absolute"></div>
@@ -67,15 +68,13 @@
 	</div>
 </div>
 
-<Contextmenu />
-
 <style lang="postcss">
 	:global(.surface > :hover) {
 		@apply scale-125;
 	}
 
 	.camera-layer {
-		@apply fixed left-0 right-0 top-0 bottom-0 z-10 pointer-events-none select-none;
+		@apply fixed left-0 right-0 top-0 bottom-0 z-[100] pointer-events-none select-none;
 	}
 
 	.lite-tips {

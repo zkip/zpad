@@ -15,8 +15,8 @@
 	$: finalData = $contextData.map(({ action, args, disabled, show }, index) => ({
 		action,
 		args,
-		show: show ?? $defaultContextData[index]?.show ?? true,
-		disabled: disabled ?? $defaultContextData[index]?.disabled ?? false
+		show: show ?? $defaultContextData[action]?.show,
+		disabled: disabled ?? $defaultContextData[action]?.disabled
 	}));
 
 	onlyBrowser(() => (document.oncontextmenu = () => false));
@@ -28,7 +28,7 @@
 	$: left = $contextmenuPosition.x;
 	$: top = $contextmenuPosition.y;
 
-	function callAnHidden<K extends keyof ContextDataType>(
+	function callAndHidden<K extends keyof ContextDataType>(
 		action: K,
 		...args: ArgsType<ContextDataType[keyof ContextDataType]>
 	) {
@@ -38,14 +38,14 @@
 </script>
 
 <div
-	class="flex flex-col gap-2 context-menu activate"
+	class="flex flex-col gap-2 context-menu activate fixed"
 	class:activate={$contextVisible}
 	style="left: {left}px; top: {top}px;"
 >
 	{#each finalData as { args, action, show, disabled }}
 		{#if show && action === 'removeTools'}
-			<div id="context-menu" class="select-none" class:disabled>
-				<div on:click={() => callAnHidden('removeTools', ...args)}>Remove tool</div>
+			<div class:disabled on:click={() => callAndHidden('removeTools', ...args)}>
+				<div>Remove tool</div>
 			</div>
 		{/if}
 	{/each}
@@ -70,9 +70,6 @@
 	}
 
 	.context-menu {
-		display: block;
-		/* max-width: 360px; */
-		position: absolute;
 	}
 
 	.context-menu > * {

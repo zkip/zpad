@@ -1,5 +1,8 @@
 <script lang="ts">
 	import Toolbar from '../../components/Toolbar.svelte';
+	import { setDefaultContextAction } from '../../core/contextmenu';
+
+	setDefaultContextAction({ removeTools: { show: false } });
 
 	async function f() {
 		const parser = new DOMParser();
