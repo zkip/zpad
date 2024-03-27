@@ -1,6 +1,6 @@
 import { isNil } from '$lib/asserts';
 import { onlyBrowser } from '$lib/browser';
-import { tryToNum } from '$lib/transformer';
+import { tryToNum } from '$lib/transform';
 import { writable } from 'svelte/store';
 import type { SetGetter } from '../types/storage';
 import { storageItemGet, storageItemRemove, storageItemSet } from '$lib/storage';

@@ -30,6 +30,7 @@
 </script>
 
 <div {...$$restProps} class="tools flex bg-slate-500 z-10 {$$restProps.class}">
+	<div class="w-12 pointer-events-none"></div>
 	{#each $toolIcons as icon, index}
 		<div
 			class="flex item justify-center items-center"
@@ -45,16 +46,14 @@
 
 <style lang="postcss">
 	.item {
-		@apply w-6 h-6 box-border;
+		@apply w-8 h-8 box-border;
 	}
 	.item.activate {
 		@apply bg-slate-700 text-white;
 	}
 
 	.tools {
-		
 	}
 	.tools > :hover {
-		
 	}
 </style>

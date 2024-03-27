@@ -2,7 +2,6 @@ import { get, writable } from 'svelte/store';
 import { removeTools } from './tools';
 import type { ArgsType } from '../types/function';
 import { last } from '$lib/list';
-import { notNil } from '$lib/asserts';
 
 export const context = writable<string>();
 

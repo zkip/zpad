@@ -1,5 +1,6 @@
 <script>
-	import '#styles/app.css';
+	import '$styles/app.css';
+	import '$styles/index.css';
 	import Contextmenu from '$components/Contextmenu.svelte';
 </script>
 

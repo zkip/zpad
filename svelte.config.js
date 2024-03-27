@@ -20,17 +20,18 @@ const config = {
 			serviceWorker: "./worker",
 			assets: "./static",
 			// hooks files put in ./application/
-			// hooks: { }
-			params: "./application/params"
+			hooks: { },
+			params: "./application/params",
 		},
 		alias: {
-			"#": "./types",
-			"#styles": "./styles",
-			"$components": "./components",
+			"$styles": "./styles",
+			"$types": "./types",
 			"$utils": "./utils",
 			"$core": "./core",
+			"$components": "./components",
 			"$directives": "./directives",
 		},
+		
 	},
 };
 
