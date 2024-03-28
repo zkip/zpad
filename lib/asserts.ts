@@ -6,6 +6,9 @@ export function isHTMLElement<T>(v: T | HTMLElement): v is HTMLElement {
 export function isHTMLDivElement<T>(v: T | HTMLDivElement): v is HTMLDivElement {
 	return v instanceof HTMLDivElement;
 }
+export function isSameElement<T extends EventTarget>(source: EventTarget | undefined, target: T): target is T {
+	return source === target
+}
 
 export function isFalsy<T>(v: T | Falsy): v is Falsy {
 	return !v;

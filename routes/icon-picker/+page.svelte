@@ -6,7 +6,7 @@
 	import { repeat } from '$lib/list';
 	import { upsertTool } from '$state/tools';
 	let surface: HTMLDivElement;
-	setDefaultContextAction({ removeTool: { show: true } });
+	setDefaultContextAction({ removeTool: { show: true }, updateToolType: { show: true } });
 
 	function showTips(text: string, position: { x: number; y: number }) {
 		const template = document.querySelector('.lite-tips') as HTMLDivElement;

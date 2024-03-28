@@ -91,7 +91,7 @@
 
 <style lang="postcss">
 	:global(body) {
-		@apply overflow-hidden;
+		@apply overflow-hidden select-none;
 	}
 	.preview {
 		border: 1px solid rebeccapurple;

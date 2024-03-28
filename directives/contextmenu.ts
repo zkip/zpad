@@ -4,8 +4,10 @@ import { showContextmenu, type ContextAction } from '$state/contextmenu';
 
 export const contextmenu = directive((node, actions: ContextAction[]) => {
 	node.addEventListener('contextmenu', () => { });
-	const clean = listen([node, 'contextmenu'], (event) => {
+	const clean = listen([node, 'contextmenu', { capture: true }], (event) => {
 		showContextmenu(actions, event);
+		event.stopPropagation();
+		event.preventDefault();
 	});
 	return { destroy: clean };
 });

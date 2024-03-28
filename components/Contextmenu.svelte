@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onlyBrowser } from '$lib/browser';
 	import { listen } from '$lib/event';
 	import {
 		ContextDataMap,
@@ -13,53 +12,69 @@
 	import type { ArgsType, FillMaxArgs } from '$types/function';
 	import type { Valueof } from '$types/mapped';
 	import { tools } from '$state/tools';
+	import { browser } from '$app/environment';
+	import { isSameElement } from '$lib/asserts';
 
-	$: finalData = $contextData.map(({ action, args, disabled, show }, index) => ({
-		action,
-		args,
-		show: show ?? $defaultContextData[action]?.show,
-		disabled: disabled ?? $defaultContextData[action]?.disabled
-	}));
+	let contextmenuNode: HTMLDivElement;
 
-	onlyBrowser(() => (document.oncontextmenu = () => false));
-	onlyBrowser(() => listen(['click'], (event) => hiddenContextmenu(event)));
-	onlyBrowser(() =>
-		listen(['keydown'], (event) => event.key === 'Escape' && hiddenContextmenu(event))
-	);
+	if (browser) {
+		document.oncontextmenu = () => false;
+
+		// composedPath: [ target, ..., div(svelte special contents block), body, html, document, window ]
+		listen(['mousedown'], (event) => {
+			const list = event.composedPath().slice(0, -5);
+			const inMenu = list.reduceRight<EventTarget | undefined>(
+				(result, target) => result || (isSameElement(target, contextmenuNode) ? target : undefined),
+				undefined
+			);
+
+			!inMenu && hiddenContextmenu(event);
+		});
+
+		listen(['keydown'], (event) => event.key === 'Escape' && hiddenContextmenu(event));
+	}
 
 	$: left = $contextmenuPosition.x;
 	$: top = $contextmenuPosition.y;
 
-	function callAndHidden<K extends keyof ContextDataType>(
+	function hiddenAndCall<K extends keyof ContextDataType>(
 		action: K,
 		...args: ArgsType<ContextDataType[keyof ContextDataType]>
 	) {
-		ContextDataMap[action](...(args as FillMaxArgs<ArgsType<Valueof<ContextDataType>>>));
 		hiddenContextmenu();
+		ContextDataMap[action](...(args as FillMaxArgs<ArgsType<Valueof<ContextDataType>>>));
 	}
 
-	function updateToolType() {
-		// ContextDataMap.updateToolType();
-		hiddenContextmenu();
+	function hiddenIfEnter(event: KeyboardEvent) {
+		if (event.key === 'Enter') hiddenContextmenu();
 	}
+
 </script>
 
 <div
-	class="flex flex-col gap-2 context-menu activate fixed"
+	class="flex flex-col context-menu activate fixed"
 	class:activate={$contextVisible}
 	style="left: {left}px; top: {top}px;"
+	bind:this={contextmenuNode}
 >
-	{#each finalData as { args, action, show, disabled }}
+	{#each $contextData as { args, action, show = $defaultContextData[action]?.show, disabled = $defaultContextData[action]?.disabled }}
 		{#if show && action === 'removeTool'}
-			<div class:disabled on:click={() => callAndHidden('removeTool', ...args)}>
+			<div class:disabled on:click={() => hiddenAndCall('removeTool', ...args)}>
 				<div>Remove tool</div>
 			</div>
 		{/if}
 		{#if show && action === 'updateToolType'}
 			{@const [index] = args}
-			<div class:disabled>
-				<input bind:value={$tools[index].type} />
-			</div>
+			{#if $tools[index]}
+				<div class:disabled>
+					<input
+						placeholder="type"
+						class="bg-transparent outline-none mx-[-12px] px-3"
+						bind:value={$tools[index].type}
+						on:keydown={hiddenIfEnter}
+					/>
+				</div>
+			{/if}
 		{/if}
 	{/each}
 </div>

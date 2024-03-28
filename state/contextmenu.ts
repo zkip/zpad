@@ -22,6 +22,11 @@ export const ContextDataMap = {
 	updateToolType,
 };
 
+export const defaultContextData = writable<DefaultContextActionOption>({
+	removeTool: { show: true, disabled: false },
+	updateToolType: { show: false, disabled: false },
+});
+
 export type ContextDataType = typeof ContextDataMap;
 export type ContextAction<K extends keyof ContextDataType = keyof ContextDataType> = {
 	action: K;
@@ -33,9 +38,6 @@ export type ContextAction<K extends keyof ContextDataType = keyof ContextDataTyp
 export const contextVisible = writable(false);
 export const contextmenuPosition = writable({ x: 0, y: 0 });
 export const contextData = writable<ContextAction[]>([]);
-export const defaultContextData = writable<DefaultContextActionOption>({
-	removeTool: { show: true, disabled: false }
-});
 export const focusLayers = writable<EventLayer[]>([]);
 export const layerEvent = writable<{ blur?: Event; focus?: Event }>({});
 
@@ -84,5 +86,6 @@ export function runWithoutFocusLayer<A extends unknown[], R>(
 }
 
 export function hasFocusLayer(event: Event) {
-	return get(focusLayers).length > 0 || Object.values(get(layerEvent)).some((e) => e === event);
+	return get(focusLayers).length > 0 || Object.values(get(layerEvent))
+		.some((layer?: Event) => layer?.timeStamp === event.timeStamp);
 }
