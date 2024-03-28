@@ -1,56 +1,59 @@
-import { isTruthy } from './asserts';
+import _ from 'lodash';
+const { get, isObject } = _;
 
-export class Vector2<T extends number> {
-	private dimension = [0, 0] as [T, T];
+export class TwoDimension<T = number> {
+    protected dimension = [0, 0] as [T, T];
 
-	set x(v: T) {
-		this.dimension[0] = v;
-	}
-	get x(): T {
-		return this.dimension[0];
-	}
+    set(v?: T): void;
+    set(d1: T, d2: T): void;
+    set(d1OrV: T, d2 = d1OrV) { this.dimension = [d1OrV, d2] }
 
-	set y(v: T) {
-		this.dimension[1] = v;
-	}
-	get y(): T {
-		return this.dimension[1];
-	}
+    all() { return this.dimension }
 
-	constructor(v?: T);
-	constructor(x: T, y: T);
-	constructor(vec: Vector2<T>);
-	constructor(xOrVec: Vector2<T>, _y = xOrVec as unknown as T) {
-		if (isVector2(xOrVec)) {
-			this.copyFrom(xOrVec);
-			return;
-		}
-		this.dimension = [xOrVec ?? 0, _y ?? 0];
-	}
+    map<U>(fn: (dimension: T, index: number, dimensions: T[]) => U) {
+        return this.dimension.map.call(this, fn) as [U, U];
+    }
 
-	map<U>(fn: (dimension: T, index: number, dimensions: T[]) => U) {
-		return this.dimension.map.call(this, fn) as [U, U];
-	}
-
-	all() {
-		return this.dimension;
-	}
-
-	/** copy form another vector */
-	copyFrom<X extends T>(vec: Vector2<X>) {
-		this.dimension = [...vec.all()];
-		return;
-	}
+    /** copy form another TwoDimesion */
+    copyFrom<U extends T>(dinmension: TwoDimension<U>) { this.dimension = [...dinmension.all()] }
 }
 
-export function isVector2<T extends Record<never, never>, X extends number>(
-	v: T | Vector2<X>
-): v is Vector2<X> {
-	if (v instanceof Vector2) return true;
+export class Vector2 extends TwoDimension<number> {
+    set x(v: number) { this.dimension[0] = v; } get x(): number { return this.dimension[0]; }
+    set y(v: number) { this.dimension[1] = v; } get y(): number { return this.dimension[1]; }
 
-	return (
-		isTruthy(v) &&
-		((v as unknown as Vector2<X>)['dimension'] ?? []).length > 1 &&
-		['x', 'y'].every((d) => d in v)
-	);
+    constructor(v?: number);
+    constructor(x: number, y: number);
+    constructor(vec: Vector2);
+    constructor(xOrVec?: Vector2 | number, y = xOrVec) {
+        super();
+
+        if (isVector2(xOrVec)) { this.copyFrom(xOrVec); return; }
+        this.set(xOrVec as number, y as number)
+    }
+}
+
+export class Size extends TwoDimension<number> {
+    set width(v: number) { this.dimension[0] = v; } get width(): number { return this.dimension[0]; }
+    set height(v: number) { this.dimension[1] = v; } get height(): number { return this.dimension[1]; }
+
+    constructor(v?: number);
+    constructor(width: number, height: number);
+    constructor(size: Size);
+    constructor(widthOrSize?: Size | number, y = widthOrSize) {
+        super();
+
+        if (isVector2(widthOrSize)) { this.copyFrom(widthOrSize); return; }
+        this.set(widthOrSize as number, y as number)
+    }
+
+    area() { return this.width * this.height }
+}
+
+export function isVector2<T>(v: T | Vector2): v is Vector2 {
+    if (v instanceof Vector2) return true;
+
+    return (
+        isObject(v) && (get(v, 'dimension.length') ?? 0) > 1 && ['x', 'y'].every((d) => d in v)
+    );
 }

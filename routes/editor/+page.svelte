@@ -1,15 +1,13 @@
 <script lang="ts">
 	import Toolbar from '$components/Toolbar.svelte';
-	import { hasFocusLayer, setDefaultContextAction } from '$core/contextmenu';
-	import { createRectangle, world } from '$core/world';
-	import { onlyBrowser } from '$lib/browser';
+	import { hasFocusLayer, setDefaultContextAction } from '$state/contextmenu';
+	import { createRectangle, world } from '$state/world';
 	import { listen } from '$lib/event';
-	import { uuid } from '$lib/generator';
-	import { Vector2 } from '$lib/vector';
-	import type { Rectangle } from '$types/Rectangle';
+	import { Size, Vector2 } from '$lib/vector';
 	import { onDestroy, onMount } from 'svelte';
+	import { RectShape, castRectShape, isRectShape } from '$core/Rectangle';
 
-	setDefaultContextAction({ removeTools: { show: false } });
+	setDefaultContextAction({ removeTool: { show: false } });
 
 	let editorNode: HTMLDivElement;
 
@@ -19,33 +17,11 @@
 	let end = new Vector2();
 
 	$: position = new Vector2(Math.min(start.x, end.x), Math.min(start.y, end.y));
-	$: size = new Vector2(Math.abs(end.x - start.x), Math.abs(end.y - start.y));
+	$: size = new Size(Math.abs(end.x - start.x), Math.abs(end.y - start.y));
 
 	let clean: () => void;
 
-	function bind(node: HTMLElement, { position, size }: Rectangle) {
-		node.style.left = `${position.x}px`;
-		node.style.top = `${position.y}px`;
-		node.style.width = `${size.width}px`;
-		node.style.height = `${size.height}px`;
-	}
-
-	function sdff() {
-		const entities = $world;
-		const fragment = document.createDocumentFragment();
-		for (const entity of entities) {
-			const node = document.createElement('div');
-			const rect = entity as Rectangle;
-			bind(node, rect);
-			fragment.appendChild(node);
-		}
-
-		editorNode.appendChild(fragment);
-	}
-
-	onMount(() => {
-		sdff();
-
+	function activateRectTool() {
 		const cleanMousedown = listen([editorNode, 'mousedown'], (event) => {
 			if (hasFocusLayer(event)) return;
 
@@ -68,24 +44,18 @@
 			const { clientX, clientY } = event;
 			end = new Vector2(clientX, clientY);
 
-			const rect = {
-				id: uuid(),
-				position: { x: position.x, y: position.y },
-				size: { width: size.x, height: size.y }
-			};
+			const rect = new RectShape(position, size);
 
-			const node = document.createElement('div');
-			bind(node, rect);
-			editorNode.appendChild(node);
-
-			createRectangle(rect);
+			if (rect.area() > 0) createRectangle(rect);
 		});
 
-		clean = () => {
-			cleanMousedown();
-			cleanMousemove();
-			cleanMouseup();
+		return () => {
+			cleanMousedown(), cleanMousemove(), cleanMouseup();
 		};
+	}
+
+	onMount(() => {
+		
 	});
 
 	onDestroy(() => {
@@ -96,7 +66,7 @@
 <div
 	class="rectangle preview"
 	class:activating
-	style="left: {position.x}px; top: {position.y}px; width: {size.x}px; height: {size.y}px;"
+	style="left: {position.x}px; top: {position.y}px; width: {size.width}px; height: {size.height}px;"
 ></div>
 
 <div class="flex flex-col bg-red-50">
@@ -104,7 +74,20 @@
 	<div class="flex-1"></div>
 </div>
 
-<div class="editor flex-1" bind:this={editorNode}></div>
+<div class="editor flex-1" bind:this={editorNode}>
+	{#each $world as entity}
+		{#if isRectShape(entity)}
+			{@const { id, position, size } = castRectShape(entity)}
+			<div
+				data-uid={id}
+				style:left={`${position.x}px`}
+				style:top={`${position.y}px`}
+				style:width={`${size.width}px`}
+				style:height={`${size.height}px`}
+			></div>
+		{/if}
+	{/each}
+</div>
 
 <style lang="postcss">
 	:global(body) {

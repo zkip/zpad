@@ -1,6 +1,6 @@
 import { get, writable } from 'svelte/store';
-import { removeTools } from './tools';
-import type { ArgsType } from '../types/function';
+import { removeTool, updateToolType } from './tools';
+import type { ArgsType } from '$types/function';
 import { last } from '$lib/list';
 
 export const context = writable<string>();
@@ -18,7 +18,8 @@ export interface ToolManipulator extends Context {
 }
 
 export const ContextDataMap = {
-	removeTools
+	removeTool,
+	updateToolType,
 };
 
 export type ContextDataType = typeof ContextDataMap;
@@ -33,7 +34,7 @@ export const contextVisible = writable(false);
 export const contextmenuPosition = writable({ x: 0, y: 0 });
 export const contextData = writable<ContextAction[]>([]);
 export const defaultContextData = writable<DefaultContextActionOption>({
-	removeTools: { show: true, disabled: false }
+	removeTool: { show: true, disabled: false }
 });
 export const focusLayers = writable<EventLayer[]>([]);
 export const layerEvent = writable<{ blur?: Event; focus?: Event }>({});

@@ -1,1 +1,1 @@
-export type Entity = { id: string }
+export type IEntity = { id: string }

@@ -2,9 +2,9 @@
 	import type { HTMLAttributes } from 'svelte/elements';
 	import { isHTMLElement } from '$lib/asserts';
 	import { onlyBrowser } from '$lib/browser';
-	import { contextmenu } from '../directives/contextmenu';
-	import { focusToolIndex, inactivate, setFocusIndex, toolIcons } from '../core/tools';
-	import { hasFocusLayer } from '../core/contextmenu';
+	import { contextmenu } from '$directives/contextmenu';
+	import { focusToolIndex, inactivate, setFocusIndex,  tools } from '$state/tools';
+	import { hasFocusLayer } from '$state/contextmenu';
 	import { listen } from '$lib/event';
 
 	function click(event: MouseEvent) {
@@ -31,7 +31,7 @@
 
 <div {...$$restProps} class="tools flex bg-slate-500 z-10 {$$restProps.class}">
 	<div class="w-12 pointer-events-none"></div>
-	{#each $toolIcons as icon, index}
+	{#each $tools as {icon}, index}
 		<div
 			class="flex item justify-center items-center"
 			class:activate={index === $focusToolIndex}

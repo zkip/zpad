@@ -9,8 +9,10 @@
 		hiddenContextmenu,
 		defaultContextData,
 		type ContextDataType
-	} from '../core/contextmenu';
-	import type { ArgsType } from '../types/function';
+	} from '$state/contextmenu';
+	import type { ArgsType, FillMaxArgs } from '$types/function';
+	import type { Valueof } from '$types/mapped';
+	import { tools } from '$state/tools';
 
 	$: finalData = $contextData.map(({ action, args, disabled, show }, index) => ({
 		action,
@@ -32,7 +34,12 @@
 		action: K,
 		...args: ArgsType<ContextDataType[keyof ContextDataType]>
 	) {
-		ContextDataMap[action](...args);
+		ContextDataMap[action](...(args as FillMaxArgs<ArgsType<Valueof<ContextDataType>>>));
+		hiddenContextmenu();
+	}
+
+	function updateToolType() {
+		// ContextDataMap.updateToolType();
 		hiddenContextmenu();
 	}
 </script>
@@ -43,9 +50,15 @@
 	style="left: {left}px; top: {top}px;"
 >
 	{#each finalData as { args, action, show, disabled }}
-		{#if show && action === 'removeTools'}
-			<div class:disabled on:click={() => callAndHidden('removeTools', ...args)}>
+		{#if show && action === 'removeTool'}
+			<div class:disabled on:click={() => callAndHidden('removeTool', ...args)}>
 				<div>Remove tool</div>
+			</div>
+		{/if}
+		{#if show && action === 'updateToolType'}
+			{@const [index] = args}
+			<div class:disabled>
+				<input bind:value={$tools[index].type} />
 			</div>
 		{/if}
 	{/each}

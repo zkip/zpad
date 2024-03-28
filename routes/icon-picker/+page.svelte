@@ -1,12 +1,12 @@
 <script lang="ts">
 	import Toolbar from '$components/Toolbar.svelte';
-	import { hasFocusLayer, setDefaultContextAction } from '$core/contextmenu';
+	import { hasFocusLayer, setDefaultContextAction } from '$state/contextmenu';
 	import { listen } from '$lib/event';
 	import { onlyBrowser } from '$lib/browser';
 	import { repeat } from '$lib/list';
-	import { upsertTool } from '$core/tools';
+	import { upsertTool } from '$state/tools';
 	let surface: HTMLDivElement;
-	setDefaultContextAction({ removeTools: { show: true } });
+	setDefaultContextAction({ removeTool: { show: true } });
 
 	function showTips(text: string, position: { x: number; y: number }) {
 		const template = document.querySelector('.lite-tips') as HTMLDivElement;

@@ -1,9 +1,9 @@
 import { listen } from '$lib/event';
 import type { ActionReturn } from 'svelte/action';
-import { showContextmenu, type ContextAction } from '../core/contextmenu';
+import { showContextmenu, type ContextAction } from '$state/contextmenu';
 
 export const contextmenu = directive((node, actions: ContextAction[]) => {
-	node.addEventListener('contextmenu', () => {});
+	node.addEventListener('contextmenu', () => { });
 	const clean = listen([node, 'contextmenu'], (event) => {
 		showContextmenu(actions, event);
 	});

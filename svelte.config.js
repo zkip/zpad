@@ -28,6 +28,7 @@ const config = {
 			"$types": "./types",
 			"$utils": "./utils",
 			"$core": "./core",
+			"$state": "./state",
 			"$components": "./components",
 			"$directives": "./directives",
 		},
