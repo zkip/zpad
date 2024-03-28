@@ -55,7 +55,7 @@
 	}
 
 	onMount(() => {
-		
+		activateRectTool();
 	});
 
 	onDestroy(() => {
