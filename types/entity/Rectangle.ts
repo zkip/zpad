@@ -1,4 +1,3 @@
-import type { IAxis, ISize } from '$types/axis';
-import type { IEntity } from '../Entity';
+import type { IAxis } from '$types/axis';
 
-export type IRectangle = { position: IAxis<number>; size: ISize<number> } & IEntity;
+export type IRectangle = { position: IAxis<number>; size: IAxis<number> };

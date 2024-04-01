@@ -1,11 +1,20 @@
 <script lang="ts">
 	import type { HTMLAttributes } from 'svelte/elements';
-	import { isHTMLElement } from '$lib/asserts';
-	import { onlyBrowser } from '$lib/browser';
+	import { isHTMLElement, isNil, notNil } from '$lib/asserts';
 	import { contextmenu } from '$directives/contextmenu';
-	import { focusToolIndex, inactivate, setFocusIndex, tools } from '$state/tools';
+	import {
+		cleanGlobalTool,
+		focusToolIndex,
+		inactivate,
+		setFocusIndex2Side,
+		setGlobalCleaners,
+		toolActions,
+		tools
+	} from '$state/tools';
 	import { hasFocusLayer } from '$state/contextmenu';
 	import { listen } from '$lib/event';
+	import { viewNode } from '$state/core';
+	import { onDestroy, onMount } from 'svelte';
 
 	function mousedown(event: MouseEvent) {
 		const { target } = event;
@@ -18,18 +27,17 @@
 		const index = Number(target.getAttribute('data-index'));
 
 		// allow relocated index
-		if (isSecondryKey) setFocusIndex(index);
-
-		if (!isSecondryKey) $focusToolIndex === index ? inactivate() : setFocusIndex(index);
+		if (isSecondryKey) setFocusIndex2Side(index);
+		if (!isSecondryKey) $focusToolIndex === index ? inactivate() : setFocusIndex2Side(index);
 		if (!isSecondryKey) event.stopPropagation();
 	}
 
-	onlyBrowser(() =>
+	onMount(()=>{
 		listen(['keydown'], (event) => {
 			if (hasFocusLayer(event)) return;
 			event.key === 'Escape' && inactivate();
-		})
-	);
+		});
+	})
 
 	interface $$Props extends HTMLAttributes<HTMLDivElement> {}
 </script>

@@ -25,3 +25,9 @@ export function storable<T>(key: string, sg: SetGetter<T>) {
 	);
 	return result;
 }
+
+
+export let viewNode: HTMLDivElement;
+export function setViewNode(node: HTMLDivElement) {
+	viewNode = node;
+}
